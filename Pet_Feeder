@@ -1,0 +1,73 @@
+/* PROJETO ALIMENTADOR DE PETISCOS
+  Ligar um sensor de distância ultrassônico (gatilho) a um
+  servo motor que abre/fecha o compartimento de armazenamento
+  de petiscos.
+*/
+
+#include <Servo.h> // Carrega a biblioteca do servo
+
+// Definição de pinos
+const int PINO_TRIG = 3;
+const int PINO_ECHO = 4;
+const int PINO_SERVO = 2;
+
+// Guarda a posição do servo
+int posicaoServo = 0;
+
+// Cria o objeto servo
+Servo servo;
+
+
+void setup() {
+
+  // Configura os pinos
+  pinMode(PINO_TRIG, OUTPUT);
+  pinMode(PINO_ECHO, INPUT);
+  pinMode(PINO_SERVO, OUTPUT);
+
+  // Posiciona o pino TRIG em nível lógico baixo
+  digitalWrite(PINO_TRIG, LOW);
+
+  // Liga o servo ao pino correspondente
+  servo.attach(PINO_SERVO);
+
+  // Posiciona o servo no começo
+  servo.write(0);
+}
+
+void loop() {
+
+  // Solicita uma medida. Para isso, precisa acionar
+  // o pino TRIG por 10us em nível alto
+  digitalWrite(PINO_TRIG, HIGH);
+  delayMicroseconds(10);          // Esta função produz uma espera em microssegundos
+  digitalWrite(PINO_TRIG, LOW);
+
+  // Conta o tempo (em microsegundos) que o pino ECHO permanece em nível alto
+  unsigned long tempoEco = pulseIn(PINO_ECHO, HIGH);
+
+  // Calcula a distância em centímetros (Vel. som = 340m/s = 34000cm/1000000us)
+  unsigned long distancia = tempoEco / 58;  // O eco leva 58us para ir e voltar 1 cm
+
+  // Inicializa a posição do servo
+  posicaoServo = 0;
+
+  // Se a distância for menor do que 20 cm, dar comida
+  if (distancia < 20)
+  {
+    // Posiciona o servo
+    servo.write(posicaoServo);  // A posição é um ângulo entre 0 a 180 graus
+
+    delay(100);
+
+    // Move o braço do servo
+    posicaoServo = posicaoServo + 45;
+    servo.write(posicaoServo);  // move o servo para a posição de dar comida
+    delay(500); // Aguarda o petisco cair
+    posicaoServo = 0;
+    servo.write(posicaoServo);  // volta o servo para a posição original
+  }
+
+  // Aguarda para fazer uma nova leitura
+  delay(1000);
+}
