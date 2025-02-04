@@ -1,73 +1,72 @@
-/* PROJETO ALIMENTADOR DE PETISCOS
-  Ligar um sensor de distância ultrassônico (gatilho) a um
-  servo motor que abre/fecha o compartimento de armazenamento
-  de petiscos.
-*/
+#include <Servo.h> // Biblioteca para controle de servos
 
-#include <Servo.h> // Carrega a biblioteca do servo
-
-// Definição de pinos
+// Definição dos pinos utilizados
 const int PINO_TRIG = 3;
 const int PINO_ECHO = 4;
 const int PINO_SERVO = 2;
 
-// Guarda a posição do servo
+// Variável para armazenar a posição do servo
 int posicaoServo = 0;
 
-// Cria o objeto servo
+// Criação do objeto servo
 Servo servo;
-
 
 void setup() {
 
-  // Configura os pinos
-  pinMode(PINO_TRIG, OUTPUT);
-  pinMode(PINO_ECHO, INPUT);
-  pinMode(PINO_SERVO, OUTPUT);
+  // Configuração de pinos
+  pinMode(PINO_TRIG, OUTPUT); // Pino que envia pulso para medir a distância
+  pinMode(PINO_ECHO, INPUT);  // Pino que recebe o eco do sensor
+  pinMode(PINO_SERVO, OUTPUT);// Pino que controla o servo
 
-  // Posiciona o pino TRIG em nível lógico baixo
+  // Define TRIG inicialmente em nível LOW
   digitalWrite(PINO_TRIG, LOW);
 
-  // Liga o servo ao pino correspondente
+  // Anexa o servo ao pino definido
   servo.attach(PINO_SERVO);
 
-  // Posiciona o servo no começo
+  // Inicializa o servo na posição 0° (fechado)
   servo.write(0);
 }
 
 void loop() {
 
-  // Solicita uma medida. Para isso, precisa acionar
-  // o pino TRIG por 10us em nível alto
+  // Envia um pulso de 10 microssegundos para o sensor ultrassônico
+  // para que ele emita o sinal sonoro
   digitalWrite(PINO_TRIG, HIGH);
-  delayMicroseconds(10);          // Esta função produz uma espera em microssegundos
+  delayMicroseconds(10);
   digitalWrite(PINO_TRIG, LOW);
 
-  // Conta o tempo (em microsegundos) que o pino ECHO permanece em nível alto
+  // Medição do tempo que o pino ECHO fica em HIGH (retorno do sinal)
   unsigned long tempoEco = pulseIn(PINO_ECHO, HIGH);
 
-  // Calcula a distância em centímetros (Vel. som = 340m/s = 34000cm/1000000us)
-  unsigned long distancia = tempoEco / 58;  // O eco leva 58us para ir e voltar 1 cm
+  // Cálculo da distância em centímetros
+  // Fórmula aproximada: distância (cm) = tempoEco / 58
+  unsigned long distancia = tempoEco / 58;
 
-  // Inicializa a posição do servo
+  // Reset da posição do servo antes de cada checagem
   posicaoServo = 0;
 
-  // Se a distância for menor do que 20 cm, dar comida
+  // Se a distância for menor que 20 cm, aciona a "alimentação"
   if (distancia < 20)
   {
-    // Posiciona o servo
-    servo.write(posicaoServo);  // A posição é um ângulo entre 0 a 180 graus
+    // Move o servo para a posição inicial (normalmente 0°)
+    servo.write(posicaoServo);
 
+    // Aguarda um instante para garantir a estabilidade
     delay(100);
 
-    // Move o braço do servo
+    // Gira o servo para 45° (ou qualquer ângulo necessário para liberar o petisco)
     posicaoServo = posicaoServo + 45;
-    servo.write(posicaoServo);  // move o servo para a posição de dar comida
-    delay(500); // Aguarda o petisco cair
+    servo.write(posicaoServo);
+
+    // Aguarda 500 ms para o petisco cair
+    delay(500);
+
+    // Retorna o servo para a posição 0° (fechado)
     posicaoServo = 0;
-    servo.write(posicaoServo);  // volta o servo para a posição original
+    servo.write(posicaoServo);
   }
 
-  // Aguarda para fazer uma nova leitura
+  // Intervalo de 1 segundo antes de realizar a próxima leitura
   delay(1000);
 }
